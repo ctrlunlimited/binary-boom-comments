@@ -1,29 +1,31 @@
 const cloudinary = require("../middleware/cloudinary");
 const Post = require("../models/Post");
-const Comment = require("../models/Comment");
+//const Comment = require("../models/Comment");
 
 module.exports = {
   getProfile: async (req, res) => {
+    console.log(req.user)
     try {
+      // Since we have a session, each req contains the logged-in user info (req.user)
+      //grabs just the post of the logged in user
+      // console.log(req.user) to see everything
       const posts = await Post.find({ user: req.user.id });
+
+      // sending post data from mongodb and user data to ejs template
       res.render("profile.ejs", { posts: posts, user: req.user });
     } catch (err) {
       console.log(err);
     }
   },
-  getFeed: async (req, res) => {
-    try {
-      const posts = await Post.find().sort({ createdAt: "desc" }).lean();
-      res.render("feed.ejs", { posts: posts });
-    } catch (err) {
-      console.log(err);
-    }
-  },
+  // id param comes from post route - router.get("/:id", ensureAuth, postsController.getPost);
   getPost: async (req, res) => {
     try {
+
+       //const comments = await Comment.find({post: req.params.id}).sort({ createdAt: "desc" }).lean();
+      // http://localhost:2121/post/674ec9847d0b926f24f76fe3
+      // id === 674ec9847d0b926f24f76fe3
       const post = await Post.findById(req.params.id);
-      const comments = await Comment.find({post: req.params.id}).sort({ createdAt: "desc" }).lean();
-      res.render("post.ejs", { post: post, user: req.user, comments: comments });
+      res.render("post.ejs", { post: post, user: req.user });
     } catch (err) {
       console.log(err);
     }
@@ -32,6 +34,9 @@ module.exports = {
     try {
       // Upload image to cloudinary
       const result = await cloudinary.uploader.upload(req.file.path);
+
+      // media is stored on cloudinary - the above request responds with url to media and the media id you will
+      //need when deleting the content
 
       await Post.create({
         title: req.body.title,
